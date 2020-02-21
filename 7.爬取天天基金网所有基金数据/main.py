@@ -26,15 +26,15 @@ referer_list = [
 ]
 
 
-
 # 返回一个可用代理，格式为ip:端口
 # 该接口直接调用github代理池项目给的例子，故不保证该接口实时可用
 # 建议自己搭建一个本地代理池，这样获取代理的速度更快
 # 代理池搭建github地址https://github.com/1again/ProxyPool
 # 搭建完毕后，把下方的proxy.1again.cc改成你的your_server_ip，本地搭建的话可以写成127.0.0.1或者localhost
 def get_proxy():
-    data_json = requests.get("http://proxy.1again.cc:35050/api/v1/proxy/?type=2").text
+    data_json = requests.get("http://proxy.1again.cc:35050/api/v1/proxy/").text
     data = json.loads(data_json)
+
     return data['data']['proxy']
 
 
@@ -43,14 +43,14 @@ def get_fund_code():
     # 获取一个随机user_agent和Referer
     header = {'User-Agent': random.choice(user_agent_list),
               'Referer': random.choice(referer_list)
-    }
+              }
 
     # 访问网页接口
     req = requests.get('http://fund.eastmoney.com/js/fundcode_search.js', timeout=5, headers=header)
 
     # 获取所有基金代码
     fund_code = req.content.decode()
-    fund_code = fund_code.replace("﻿var r = [","").replace("];","")
+    fund_code = fund_code.replace("﻿var r = [", "").replace("];", "")
 
     # 正则批量提取
     fund_code = re.findall(r"[\[](.*?)[\]]", fund_code)
@@ -58,7 +58,7 @@ def get_fund_code():
     # 对每行数据进行处理，并存储到fund_code_list列表中
     fund_code_list = []
     for sub_data in fund_code:
-        data = sub_data.replace("\"","").replace("'","")
+        data = sub_data.replace("\"", "").replace("'", "")
         data_list = data.split(",")
         fund_code_list.append(data_list)
 
@@ -67,7 +67,6 @@ def get_fund_code():
 
 # 获取基金数据
 def get_fund_data():
-
     # 当队列不为空时
     while (not fund_code_queue.empty()):
 
@@ -81,17 +80,18 @@ def get_fund_data():
         # 获取一个随机user_agent和Referer
         header = {'User-Agent': random.choice(user_agent_list),
                   'Referer': random.choice(referer_list)
-        }
+                  }
 
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
             # 使用代理访问
-            req = requests.get("http://fundgz.1234567.com.cn/js/" + str(fund_code) + ".js", proxies={"http": proxy}, timeout=3, headers=header)
+            req = requests.get("http://fundgz.1234567.com.cn/js/" + str(fund_code) + ".js", proxies={"http": proxy},
+                               timeout=3, headers=header)
 
             # 没有报异常，说明访问成功
             # 获得返回数据
-            data = (req.content.decode()).replace("jsonpgz(","").replace(");","").replace("'","\"")
+            data = (req.content.decode()).replace("jsonpgz(", "").replace(");", "").replace("'", "\"")
             data_dict = json.loads(data)
             print(data_dict)
 
@@ -125,14 +125,12 @@ if __name__ == '__main__':
     fund_code_queue = queue.Queue(len(fund_code_list))
     # 写入基金代码数据到队列
     for i in range(len(fund_code_list)):
-        #fund_code_list[i]也是list类型，其中该list中的第0个元素存放基金代码
+        # fund_code_list[i]也是list类型，其中该list中的第0个元素存放基金代码
         fund_code_queue.put(fund_code_list[i][0])
-
-
 
     # 创建一个线程锁，防止多线程写入文件时发生错乱
     mutex_lock = threading.Lock()
     # 线程数为50，在一定范围内，线程数越多，速度越快
     for i in range(50):
-        t = threading.Thread(target=get_fund_data,name='LoopThread'+str(i))
+        t = threading.Thread(target=get_fund_data, name='LoopThread' + str(i))
         t.start()
