@@ -34,7 +34,16 @@ referer_list = [
 def get_proxy():
     data_json = requests.get("http://proxy.1again.cc:35050/api/v1/proxy/").text
     data = json.loads(data_json)
-
+    # data_json = requests.get("https://lab.crossincode.com/proxy/get/").text
+    # data = json.loads(data_json)
+    # d = data['proxies'][]['http']
+    # data_json = requests.get("https://lab.crossincode.com/proxy/get/").text
+    # data = json.loads(data_json)
+    # d0 = data['proxies'][2]['http']
+    # data_json = requests.get("https://lab.crossincode.com/proxy/get/").text
+    # data = json.loads(data_json)
+    # d3 = data['proxies'][3]['http']
+    # return d3
     return data['data']['proxy']
 
 
@@ -85,8 +94,10 @@ def get_fund_data():
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
+            #for n in [0, 1, 2, 3, 4]:
             # 使用代理访问
-            req = requests.get("http://fundgz.1234567.com.cn/js/" + str(fund_code) + ".js", proxies={"http": proxy},
+            req = requests.get("http://fundgz.1234567.com.cn/js/" + str(fund_code) + ".js",
+                               proxies={"http": proxy()},
                                timeout=3, headers=header)
 
             # 没有报异常，说明访问成功
